@@ -1,0 +1,9 @@
+glob:Luhn.suo
+glob:bin/Debug/Luhn.exe
+glob:bin/Debug/Luhn.pdb
+glob:bin/Debug/Luhn.vshost.exe
+glob:bin/Debug/Luhn.vshost.exe.manifest
+glob:obj/x86/Debug/DesignTimeResolveAssemblyReferencesInput.cache
+glob:obj/x86/Debug/Luhn.csproj.FileListAbsolute.txt
+glob:obj/x86/Debug/Luhn.exe
+glob:obj/x86/Debug/Luhn.pdb
