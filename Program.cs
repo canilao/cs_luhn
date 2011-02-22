@@ -12,12 +12,20 @@ namespace Luhn
         {
             Guid guid = Guid.NewGuid();
             string guidAsString = "";
+            BigInteger guidAsInt = new BigInteger();
 
             while (true)
             {
                 byte[] guidAsBytes = guid.ToByteArray();
-                BigInteger guidAsInt = new BigInteger(guidAsBytes);
+                guidAsInt = new BigInteger(guidAsBytes);
+                 
                 guidAsString = guid.ToString("D");
+
+                if (guidAsInt < 0)
+                {
+                    guid = Guid.NewGuid();
+                    continue;
+                }
 
                 if (IsValid(guidAsInt.ToString())) break;
 
