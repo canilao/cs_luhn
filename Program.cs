@@ -1,38 +1,104 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Numerics;
 
 namespace Luhn
 {
+    class Luhn16Guid
+    {
+        private static int CodePointFromCharacter(char character)
+        {
+            return Convert.ToInt32(character.ToString(), 16);
+        }
+
+        private static char CharacterFromCodePoint(int codePoint)
+        {
+            return Char.Parse(String.Format("{0:X}", codePoint));
+        }
+
+        private static char GenerateCheckCharacter(string input)
+        {
+            int factor = 2;
+            int sum = 0;
+            int n = 16;
+
+            // Starting from the right and working leftwards is easier since 
+            // the initial "factor" will always be "2" 
+            for (int i = input.Length - 1; i >= 0; --i)
+            {
+                int codePoint = CodePointFromCharacter(input[i]);
+                int addend = factor * codePoint;
+
+                // Alternate the "factor" that each "codePoint" is multiplied by
+                factor = (factor == 2) ? 1 : 2;
+
+                // Sum the digits of the "addend" as expressed in base "n"
+                addend = (addend / n) + (addend % n);
+                sum += addend;
+            }
+
+            // Calculate the number that must be added to the "sum" 
+            // to make it divisible by "n"
+            int remainder = sum % n;
+            int checkCodePoint = n - remainder;
+            checkCodePoint %= n;
+
+            return CharacterFromCodePoint(checkCodePoint);
+        }
+
+        public static Guid GenerateLuhn16Guid()
+        {
+            // Generate a guid.
+            Guid guid = Guid.NewGuid();
+
+            // Generate string version of the guid with no dashes or brackets.
+            string guidStr = guid.ToString("N");
+
+            // Remove the last character.
+            guidStr = guid.ToString("N").Substring(0, guidStr.Length - 1);
+
+            // Create calculate the check digit.
+            guidStr = guidStr + GenerateCheckCharacter(guidStr);
+
+            // Return our new guid.
+            return Guid.Parse(guidStr);
+        }
+
+        public static bool Validate(Guid inGuid)
+        {
+            var input = inGuid.ToString("N");
+
+            int factor = 1;
+            int sum = 0;
+            int n = 16;
+
+            // Starting from the right, work leftwards
+            // Now, the initial "factor" will always be "1" 
+            // since the last character is the check character
+            for (int i = input.Length - 1; i >= 0; i--)
+            {
+                int codePoint = CodePointFromCharacter(input[i]);
+                int addend = factor * codePoint;
+
+                // Alternate the "factor" that each "codePoint" is multiplied by
+                factor = (factor == 2) ? 1 : 2;
+
+                // Sum the digits of the "addend" as expressed in base "n"
+                addend = (addend / n) + (addend % n);
+                sum += addend;
+            }
+
+            int remainder = sum % n;
+
+            return (remainder == 0);
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
         {
-            Guid guid = Guid.NewGuid();
-            string guidAsString = "";
-            BigInteger guidAsInt = new BigInteger();
+            var theGuid = Luhn16Guid.GenerateLuhn16Guid();
 
-            while (true)
-            {
-                byte[] guidAsBytes = guid.ToByteArray();
-                guidAsInt = new BigInteger(guidAsBytes);
-                 
-                guidAsString = guid.ToString("D");
-
-                if (guidAsInt < 0)
-                {
-                    guid = Guid.NewGuid();
-                    continue;
-                }
-
-                if (IsValid(guidAsInt.ToString())) break;
-
-                guid = Guid.NewGuid();
-            }
-
-            Console.Out.WriteLine(guidAsString);
+            Console.Out.WriteLine(theGuid.ToString());
 
             bool breakOut = false;
             while (!breakOut)
@@ -56,10 +122,7 @@ namespace Luhn
                     continue;
                 }
 
-                byte[] enteredGuidAsBytes = enteredGuid.ToByteArray();
-                BigInteger enteredGuidAsInt = new BigInteger(enteredGuidAsBytes);
-
-                if (IsValid(enteredGuidAsInt.ToString()))
+                if (Luhn16Guid.Validate(enteredGuid))
                 {
                     Console.Out.WriteLine("GUID was entered correctly");
                 }
@@ -68,19 +131,6 @@ namespace Luhn
                     Console.Out.WriteLine("GUID was entered incorrectly");
                 }
             }
-        }
-
-        public static int ComputeChecksum(string value)
-        {
-            return value.Where(c => Char.IsDigit(c))
-                        .Reverse()
-                        .SelectMany((c, i) => ((c - '0') << (i & 1)).ToString())
-                        .Sum(c => c - '0') % 10;
-        }
-
-        public static bool IsValid(string value)
-        {
-            return ComputeChecksum(value) == 0;
         }
     }
 }
